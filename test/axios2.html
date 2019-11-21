@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+  <button id="btn1">按钮1</button>
+  <button id="btn2">按钮2</button>
+  <script src="https://cdn.bootcss.com/axios/0.19.0/axios.min.js"></script>
+    <script> 
+    let token='';
+    const btn1 = document.getElementById('btn1')
+    const btn2 = document.getElementById('btn2')
+    const axiosInstance=axios.create({
+        // 所有请求的公共路径
+        baseURL:'http://localhost:5000/api',
+        // 请求超过时间设定就会自动中断请求
+        timeout:5000,
+        
+    });
+    axiosInstance.interceptors.request.use(
+        (config)=>{
+            // console.log(config)
+            if(config.method==='post'){
+                config.headers['content-type']='application/x-www-form-urlencoded';
+                config.data=Object.keys(config.data).reduce((pre,key)=>{
+                const value=config.data[key];
+                return pre+`&${key}=${value}`;
+                },'').substring(1);
+            }
+            if(token){
+                // !!!!!!Bearer与token之间有空格，要在字符串里加空格
+                    config.headers.authorization='Bearer '+ token;
+                }
+                return config;
+        }
+     );
+    
+    axiosInstance.interceptors.response.use(
+        (response)=>{
+            console.dir(response)
+        // 响应触发
+        if(response.data.status===0){
+            return response.data.data;
+        }else { 
+            alert(response.data.msg)
+            return Promise.reject();
+        }
+    },
+    (error)=>{
+        const codeMessage = {
+          401: '没有权限访问接口',
+          403: '禁止访问',
+          404: '资源不存在',
+          500: '哇哦，故障了，请联系管理员~'
+        }
+        let errMessage = '';
+        if(error.response){
+            errMessage=codeMessage[error.response.status]
+        }else {
+          if (error.message.indexOf('Network Error') !== -1) {
+            errMessage = '请检查网络连接';
+          } else if (error.message.indexOf('timeout') !== -1) {
+            errMessage = '网络太卡了，请连上wifi重试';
+          } else {
+            errMessage = '未知错误';
+          }
+        }
+        alert( errMessage);
+        return Promise.reject( errMessage);
+    }
+        )    
+        // username和password的值是变化的，所以将axiosInstance包裹在一个函数中
+        const reqLogin=(username,password)=>{
+            return axiosInstance({
+                method:'POST',
+                url:'/login',
+                data:{
+                    username,
+                    password
+                }
+    })      
+        } 
+        // 为什么不可以！
+        // const reqRole=axiosInstance({
+        //      method:'GET',
+        //      url:'/role/get',
+        //  })
+      const reqRole=()=>{
+          return axiosInstance({
+             method:'GET',
+             url:'/role/get',
+         })
+        }
+btn1.onclick=function(){
+   reqLogin('admin','admin')
+.then((response)=>{
+    console.dir(response);
+    token = response.token;
+})
+}
+btn2.onclick = function () {
+        reqRole()
+        .then((response) => {
+          console.log(response);
+        })
+    }
+</script>
+</body>
+</html> 

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+<button id="btn1">按钮1</button>
+  <button id="btn2">按钮2</button>
+  <script src="https://cdn.bootcss.com/axios/0.19.0/axios.min.js"></script>
+  <script>
+      let token='';
+    const btn1 = document.getElementById('btn1')
+    const btn2 = document.getElementById('btn2')
+    btn1.onclick=function(){
+    axios({
+    method:'POST',
+    url:'http://localhost:5000/api/login',
+    data:'username=admin&password=admin',
+    headers:{
+        'content-type':'application/x-www-form-urlencoded'
+    }
+})
+.then((response)=>{
+    if(response.data.status===0){
+        console.log(response.data.data);
+        token = response.data.data.token;
+    }else{
+        console.log(response.data.msg);
+    }
+})
+.catch((err)=>{
+    alert('网络错误');
+})
+    }
+    btn2.onclick=function(){
+    axios({
+    method:'GET',
+    url:'http://localhost:5000/api/user/get',
+    headers:{
+        authorization: 'Bearer' +token
+    }
+})
+.then((response)=>{
+    if(response.data.status===0){
+        console.log(response.data.data);
+    }else{
+        console.log(response.data.msg);
+    }
+})
+.catch((err)=>{
+    alert('网络错误');
+})
+    }
+    </script>
+</body>
+</html>
